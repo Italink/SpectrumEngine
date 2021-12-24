@@ -1,20 +1,18 @@
 #include "SpectrumEngine.h"
 #include <corecrt_memcpy_s.h>
 #include "SpectrumProvider.h"
+#include "Utils.h"
 
-SpectrumEngine* SpectrumEngine::getInstance()
-{
+SpectrumEngine* SpectrumEngine::getInstance() {
 	static SpectrumEngine instance;
 	return &instance;
 }
 
-std::vector<std::shared_ptr<AudioDevice>> SpectrumEngine::enumDevices(EDataFlow type /*= eRender*/)
-{
+std::vector<std::shared_ptr<AudioDevice>> SpectrumEngine::enumDevices(EDataFlow type /*= eRender*/) {
 	return capture.enumDevices(type);
 }
 
-void SpectrumEngine::start(std::shared_ptr<AudioDevice> device, int interval)
-{
+void SpectrumEngine::start(std::shared_ptr<AudioDevice> device, int interval) {
 	currentDevice = device;
 	onWaveFormatChanged(device->format);
 	capture.start(device);
@@ -32,15 +30,13 @@ bool SpectrumEngine::isRunning()
 	return capture.isRunning();
 }
 
-void SpectrumEngine::stop()
-{
+void SpectrumEngine::stop() {
 	capture.stop();
 	analyzing = false;
 	analyserThread.reset();
 }
 
-void SpectrumEngine::submitAudioData(unsigned char* data, size_t size)
-{
+void SpectrumEngine::submitAudioData(unsigned char* data, size_t size) {
 	if (bufferSize + size >= MAX_BUFFER_SIZE) {
 		memcpy_s(buffer, spectrumSize, buffer + bufferSize - spectrumSize, spectrumSize);
 		bufferSize = spectrumSize;
@@ -49,19 +45,27 @@ void SpectrumEngine::submitAudioData(unsigned char* data, size_t size)
 	bufferSize += size;
 }
 
-int SpectrumEngine::barIndex(const double& frequency)
+std::function<double(unsigned char*)> SpectrumEngine::funcPcmToReal()
 {
-	return 	std::clamp((int)std::round(SpectrumLengthSamples * frequency / currentDevice->format.nSamplesPerSec)/2, 0, SpectrumLengthSamples);
+	return getFuncPcmToReal(getCurrentWaveFormat().wBitsPerSample);
 }
 
-void SpectrumEngine::onWaveFormatChanged(WAVEFORMATEX format)
+WAVEFORMATEX SpectrumEngine::getCurrentWaveFormat()
 {
+	return currentDevice->format;
+}
+
+int SpectrumEngine::barIndex(const double& frequency)
+{
+	return 	std::clamp((int)std::round(SpectrumLengthSamples * frequency / currentDevice->format.nSamplesPerSec) / 2, 0, SpectrumLengthSamples);
+}
+
+void SpectrumEngine::onWaveFormatChanged(WAVEFORMATEX format) {
 	spectrumSize = SpectrumLengthSamples * (format.wBitsPerSample / 8) * format.nChannels;
 	analyser.updateFormat(format);
 }
 
-void SpectrumEngine::onCalculateSpectrum()
-{
+void SpectrumEngine::onCalculateSpectrum() {
 	if (bufferSize > spectrumSize) {
 		analyser.calculate(buffer + bufferSize - spectrumSize, spectrumSize);
 		for (auto& spec : specProviders) {

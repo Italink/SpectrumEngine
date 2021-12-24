@@ -21,28 +21,6 @@ struct SpectrumData {
 	std::vector<Channel> channels;
 };
 
-template<int N> struct PowerOfTwo {
-	static const int Result = PowerOfTwo<N - 1>::Result * 2;
-};
-
-template<> struct PowerOfTwo<0> {
-	static const int Result = 1;
-};
-
-const int SpectrumLengthSamples = PowerOfTwo<11>::Result;
-
-enum class WindowFunction {
-	NoWindow,
-	GuassWindow,
-	HannWindow,
-	HammingWindow,
-	BartlettWindow,
-	TriangleWindow,
-	BlackmanWindow,
-	NuttallWindow,
-	SinWindow
-};
-
 class SpectrumAnalyser {
 public:
 	SpectrumAnalyser();
@@ -58,8 +36,6 @@ private:
 	double* output;
 	fftw_plan plan;
 	WAVEFORMATEX currentFormat;
-	std::function<double(unsigned char*)> funcPcmToReal[4];
-	int funcIndex = 0;
-}; 
+};
 
 #endif // SpectrumAnalyser_h__

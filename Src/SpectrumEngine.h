@@ -12,6 +12,7 @@ class RhythmProvider;
 class SpectrumEngine {
 	friend class SpectrumProvider;
 	friend class RhythmProvider;
+	friend class SpectrumAnalyser;
 private:
 	SpectrumEngine() {};
 public:
@@ -22,6 +23,10 @@ public:
 	void stop();
 	void submitAudioData(unsigned char* data, size_t size);
 private:
+	std::function<double(unsigned char*)> funcPcmToReal();
+	WAVEFORMATEX getCurrentWaveFormat();
+
+private:
 	int barIndex(const double& frequency);
 	void onWaveFormatChanged(WAVEFORMATEX format);
 	void onCalculateSpectrum();
@@ -30,8 +35,8 @@ private:
 	SpectrumAnalyser analyser;
 	std::shared_ptr<AudioDevice> currentDevice;
 	unsigned char buffer[MAX_BUFFER_SIZE];
-	int bufferSize;
-	int spectrumSize;
+	int64_t bufferSize;
+	int64_t spectrumSize;
 	std::atomic<bool> analyzing = false;
 	std::shared_ptr<std::thread> analyserThread;
 	std::list<SpectrumProvider*> specProviders;

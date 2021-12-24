@@ -8,8 +8,8 @@
 
 int main() {
 	auto it = SpectrumEngine::getInstance()->enumDevices();
-
 	SpectrumEngine::getInstance()->start(it.front());
+
 	SpectrumProvider provider(0, 40000, 80);
 	std::vector<std::string> map(40, std::string(provider.getBarCount(), ' '));
 

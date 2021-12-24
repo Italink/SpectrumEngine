@@ -14,11 +14,11 @@ public:
 	RhythmProvider(double timeMs, RhythmProvider::Type type);
 	~RhythmProvider();
 private:
-	void submitAudioData(std::vector<float> data);
+	void update();
 private:
 	unsigned int channelIndex = 0;
 	double rhythm;
-	double timeMs;
+	int64_t timeMs;
 	Type type;
 };
 
