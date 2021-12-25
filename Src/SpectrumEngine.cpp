@@ -17,12 +17,15 @@ void SpectrumEngine::start(std::shared_ptr<AudioDevice> device, int interval) {
 	onWaveFormatChanged(device->format);
 	capture.start(device);
 	analyzing = true;
-	analyserThread = std::make_shared<std::thread>([interval, this]() {
-		while (analyzing) {
+	stoped = std::promise<bool>();
+	analyserThread = std::thread([interval, this]() {
+		do {
 			onCalculateSpectrum();
 			std::this_thread::sleep_for(std::chrono::milliseconds(interval));
-		}
+		} while (analyzing);
+		stoped.set_value_at_thread_exit(true);
 	});
+	analyserThread.detach();
 }
 
 bool SpectrumEngine::isRunning()
@@ -33,7 +36,8 @@ bool SpectrumEngine::isRunning()
 void SpectrumEngine::stop() {
 	capture.stop();
 	analyzing = false;
-	analyserThread.reset();
+	std::future<bool> future = stoped.get_future();
+	future.wait();
 }
 
 void SpectrumEngine::submitAudioData(unsigned char* data, size_t size) {

@@ -3,6 +3,7 @@
 
 #include <AudioCapture.h>
 #include "SpectrumAnalyser.h"
+#include <mutex>
 
 const int MAX_BUFFER_SIZE = 1000000;
 
@@ -38,9 +39,11 @@ private:
 	int64_t bufferSize;
 	int64_t spectrumSize;
 	std::atomic<bool> analyzing = false;
-	std::shared_ptr<std::thread> analyserThread;
+	std::promise<bool> stoped;
+	std::thread analyserThread;
 	std::list<SpectrumProvider*> specProviders;
 	std::list<RhythmProvider*> rhythmProviders;
+	std::condition_variable cv;
 };
 
 #endif // SpectrumEngine_h__

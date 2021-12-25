@@ -9,5 +9,7 @@ int main(int argc, char* argv[])
 	SpectrumEngine::getInstance()->start(it.front());
 	ExampleWidget w;
 	w.show();
-	return a.exec();
+	a.exec();
+	SpectrumEngine::getInstance()->stop();
+	return 0;
 }
