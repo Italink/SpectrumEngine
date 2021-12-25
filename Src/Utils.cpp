@@ -1,4 +1,5 @@
 #include "Utils.h"
+#include <algorithm>
 
 #define M_PI 3.1415926535
 
@@ -27,7 +28,7 @@ std::function<double(unsigned char*)> getFuncPcmToReal(int bits)
 		return (*reinterpret_cast<const int32_t*>(data)) / double(PCMS32MaxAmplitude);
 	}
 	};
-	return funcPcmToReal[bits / 8];
+	return funcPcmToReal[std::clamp(bits / 8 - 1, 0, 3)];
 }
 
 std::vector<double> createWindowFunction(int size, WindowFunction funcType)
