@@ -10,12 +10,12 @@ SpectrumProvider::SpectrumProvider(int low, int high, int barsCount)
 	, smoothFactor(0.7)
 	, filterFactor(0)
 {
-	SpectrumEngine::getInstance()->specProviders.push_back(this);
+	SpectrumEngine::getInstance()->spectrumProviders.push_back(this);
 }
 
 SpectrumProvider::~SpectrumProvider()
 {
-	SpectrumEngine::getInstance()->specProviders.remove(this);
+	SpectrumEngine::getInstance()->spectrumProviders.remove(this);
 }
 
 int SpectrumProvider::getLowFreq() const

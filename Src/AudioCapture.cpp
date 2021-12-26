@@ -11,17 +11,19 @@
 
 AudioCapture::AudioCapture()
 {
-	CoInitialize(NULL);
-	CoCreateInstance(__uuidof(MMDeviceEnumerator),
-							  NULL,
-							  CLSCTX_ALL,
-							  __uuidof(IMMDeviceEnumerator),
-							  (void**)&pOutputEnumerator);
-	pOutputEnumerator->RegisterEndpointNotificationCallback(this);
+
 }
 
 std::vector<std::shared_ptr<AudioDevice>> AudioCapture::enumDevices(EDataFlow type /*= eRender*/)
 {
+	CoInitialize(NULL);
+	IMMDeviceEnumerator* outputEnumerator;
+	CoCreateInstance(__uuidof(MMDeviceEnumerator),
+						  NULL,
+						  CLSCTX_ALL,
+						  __uuidof(IMMDeviceEnumerator),
+						  (void**)&outputEnumerator);
+	outputEnumerator->RegisterEndpointNotificationCallback(this);
 	std::vector<std::shared_ptr<AudioDevice>> devices;
 	IMMDeviceCollection* pCollection = NULL;
 	IMMDevice* defaultDevice;
@@ -30,13 +32,13 @@ std::vector<std::shared_ptr<AudioDevice>> AudioCapture::enumDevices(EDataFlow ty
 	IPropertyStore* pProps = NULL;
 	PROPVARIANT propVar;
 	HRESULT hr;
-	hr = pOutputEnumerator->EnumAudioEndpoints(type, eMultimedia, &pCollection);
+	hr = outputEnumerator->EnumAudioEndpoints(type, eMultimedia, &pCollection);
 	if (FAILED(hr)) {
 		printf("Unable to activate audio client: %x.\n", hr);
 		return devices;
 	}
 
-	hr = pOutputEnumerator->GetDefaultAudioEndpoint(type, eMultimedia, &defaultDevice);
+	hr = outputEnumerator->GetDefaultAudioEndpoint(type, eMultimedia, &defaultDevice);
 	if (FAILED(hr)) {
 		printf("Unable to activate audio client: %x.\n", hr);
 		return devices;
@@ -106,7 +108,8 @@ std::vector<std::shared_ptr<AudioDevice>> AudioCapture::enumDevices(EDataFlow ty
 		devices.push_back(device);
 		SAFE_RELEASE(pProps);
 	}
-	pCollection->Release();
+	SAFE_RELEASE(pCollection);
+	SAFE_RELEASE(outputEnumerator);
 	return devices;
 }
 
@@ -176,11 +179,9 @@ void AudioCapture::start(std::shared_ptr<AudioDevice> device) {
 			if (SUCCEEDED(hr)) {
 				if (framesAvailable != 0) {
 					if (flags & AUDCLNT_BUFFERFLAGS_SILENT) {
-						//  Fill 0s from the capture buffer to the output buffer.
+						
 					}
-					else {
-						SpectrumEngine::getInstance()->submitAudioData(pData, framesAvailable * _FrameSize);
-					}
+					SpectrumEngine::getInstance()->submitAudioData(pData, framesAvailable * _FrameSize);
 				}
 				hr = _CaptureClient->ReleaseBuffer(framesAvailable);
 				if (FAILED(hr)) {
@@ -223,4 +224,16 @@ HRESULT STDMETHODCALLTYPE AudioCapture::OnDeviceAdded(LPCWSTR pwstrDeviceId)
 HRESULT STDMETHODCALLTYPE AudioCapture::OnDeviceRemoved(LPCWSTR pwstrDeviceId)
 {
 	return NULL;
+}
+
+HRESULT STDMETHODCALLTYPE AudioCapture::OnDeviceStateChanged(LPCWSTR, DWORD)
+{
+	SpectrumEngine::getInstance()->restart();
+	return 0;
+}
+
+HRESULT STDMETHODCALLTYPE AudioCapture::OnPropertyValueChanged(LPCWSTR, const PROPERTYKEY)
+{
+	SpectrumEngine::getInstance()->restart();
+	return 0;
 }

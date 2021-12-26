@@ -46,11 +46,9 @@ protected:
 			LPCWSTR pwstrDeviceId);
 	HRESULT STDMETHODCALLTYPE OnDeviceAdded(LPCWSTR pwstrDeviceId);
 	HRESULT STDMETHODCALLTYPE OnDeviceRemoved(LPCWSTR pwstrDeviceId);
-	HRESULT STDMETHODCALLTYPE OnDeviceStateChanged(LPCWSTR, DWORD) { return 0; }
-
-	HRESULT STDMETHODCALLTYPE OnPropertyValueChanged(LPCWSTR, const PROPERTYKEY) { return 0; }
+	HRESULT STDMETHODCALLTYPE OnDeviceStateChanged(LPCWSTR, DWORD);
+	HRESULT STDMETHODCALLTYPE OnPropertyValueChanged(LPCWSTR, const PROPERTYKEY);
 private:
-	IMMDeviceEnumerator* pOutputEnumerator;
 	std::shared_ptr<std::thread> captureThread;
 	bool running;
 	std::mutex lock;

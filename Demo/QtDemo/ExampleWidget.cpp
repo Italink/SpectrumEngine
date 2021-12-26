@@ -4,7 +4,7 @@
 
 ExampleWidget::ExampleWidget(QWidget* parent)
 	: QWidget(parent)
-	, spec(0, 40000, 100)                        //创建0-40000HZ的频谱，采样点为100,其中负值为左声道，正值为右声道
+	, spec(0, 40000, 500)                        //创建0-40000HZ的频谱，采样点为100,其中负值为左声道，正值为右声道
 {
 	QTimer* timer = new QTimer(this);
 	connect(timer, &QTimer::timeout, this, static_cast<void (QWidget::*)()>(&QWidget::repaint));

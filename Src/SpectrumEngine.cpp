@@ -42,11 +42,17 @@ void SpectrumEngine::stop() {
 
 void SpectrumEngine::submitAudioData(unsigned char* data, size_t size) {
 	if (bufferSize + size >= MAX_BUFFER_SIZE) {
-		memcpy_s(buffer, spectrumSize, buffer + bufferSize - spectrumSize, spectrumSize);
-		bufferSize = spectrumSize;
+		memcpy_s(buffer, submitSize, buffer + bufferSize - submitSize, submitSize);
+		bufferSize = submitSize;
 	}
 	memcpy_s(buffer + bufferSize, size, data, size);
 	bufferSize += size;
+}
+
+void SpectrumEngine::setSpectrumSampleLevel(const int level)
+{
+	spectrumSampleLevel = level;
+	onWaveFormatChanged(currentDevice->format);
 }
 
 std::function<double(unsigned char*)> SpectrumEngine::funcPcmToReal()
@@ -59,25 +65,45 @@ WAVEFORMATEX SpectrumEngine::getCurrentWaveFormat()
 	return currentDevice->format;
 }
 
-int SpectrumEngine::barIndex(const double& frequency)
+void SpectrumEngine::restart()
 {
-	return 	std::clamp((int)std::round(SpectrumLengthSamples * frequency / currentDevice->format.nSamplesPerSec) / 2, 0, SpectrumLengthSamples);
+	if (isRunning()) {
+		stop();
+	}
+	std::shared_ptr<AudioDevice> newDevice;
+	std::vector<std::shared_ptr<AudioDevice>> deviceList = enumDevices(currentDevice->type);
+	for (auto& device : deviceList) {
+		if (currentDevice->name.size()==device->name.size() && std::equal(device->name.begin(), device->name.end(), currentDevice->name.begin()))
+			newDevice = device;
+	}
+	if (!newDevice) {
+		if (deviceList.empty()) {
+			printf(" no devices");
+			return;
+		}
+		newDevice = deviceList.front();
+	}
+	start(newDevice);
 }
 
+
+
 void SpectrumEngine::onWaveFormatChanged(WAVEFORMATEX format) {
-	spectrumSize = SpectrumLengthSamples * (format.wBitsPerSample / 8) * format.nChannels;
-	analyser.updateFormat(format);
+	int64_t spectrumSample = (1 << spectrumSampleLevel);
+	submitSize = spectrumSample * (format.wBitsPerSample / 8) * format.nChannels;
+	analyser.updateFormat(format, spectrumSample);
 }
 
 void SpectrumEngine::onCalculateSpectrum() {
-	if (bufferSize > spectrumSize) {
-		analyser.calculate(buffer + bufferSize - spectrumSize, spectrumSize);
-		for (auto& spec : specProviders) {
+	if (bufferSize > submitSize) {
+		analyser.calculate(buffer + bufferSize - submitSize, submitSize);
+		
+		for (auto& spec : spectrumProviders) {
 			float begin = spec->lowFreq;
 			float offset = (spec->highFreq - begin) / (spec->getBarCount() - 1);
-			const auto& channel = analyser.specData.channels[spec->getChannelIndex() % analyser.specData.channels.size()];
+			auto& channel = analyser.specData.channels[spec->getChannelIndex() % analyser.specData.channels.size()];
 			for (auto& it : spec->bars) {
-				it = channel.specs[barIndex(begin)].amplitude;
+				it = channel.getAmplitude(begin);
 				begin += offset;
 			}
 			spec->smoothing();

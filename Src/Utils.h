@@ -13,7 +13,6 @@ template<> struct PowerOfTwo<0> {
 	static const int Result = 1;
 };
 
-const int SpectrumLengthSamples = PowerOfTwo<11>::Result;
 
 enum class WindowFunction {
 	NoWindow,
