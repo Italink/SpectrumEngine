@@ -24,8 +24,8 @@ struct SpectrumData {
 		double getAmplitude(double frequency) {
 			double offset = (specs.size() - 1) * frequency / nSamplesPerSec;
 			int index = std::clamp((int)std::round(offset), 0, int(specs.size() - 1));
-			const double& p0 = controlPoint[index];
-			const double& p1 = specs[index].amplitude;
+			const double& p0 = specs[index].amplitude;
+			const double& p1 = controlPoint[index];
 			const double& p2 = specs[index + 1].amplitude;
 			double t = offset - index + 0.5;
 			return (1 - t) * (1 - t) * p0 + 2 * t * (1 - t) * p1 + t * t * p2;

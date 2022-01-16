@@ -39,7 +39,7 @@ private:
 	unsigned char buffer[MAX_BUFFER_SIZE];
 	int64_t bufferSize;
 	int64_t submitSize;
-	int spectrumSampleLevel = 10;
+	int spectrumSampleLevel = 12;
 	std::atomic<bool> analyzing = false;
 	std::promise<bool> stoped;
 	std::thread analyserThread;

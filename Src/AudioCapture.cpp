@@ -172,7 +172,6 @@ void AudioCapture::start(std::shared_ptr<AudioDevice> device) {
 		while (running) {
 			DWORD waitResult = WaitForSingleObject(_AudioSamplesReadyEvent, INFINITE);
 			BYTE* pData;
-			INT nBufferLenght;
 			UINT32 framesAvailable;
 			DWORD  flags;
 			hr = _CaptureClient->GetBuffer(&pData, &framesAvailable, &flags, NULL, NULL);
